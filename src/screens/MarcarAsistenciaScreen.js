@@ -114,6 +114,43 @@ export default function MarcarAsistenciaScreen({ token, onVolver }) {
     }
   };
 
+  // Función para formatear a YYYY-MM-DD aceptando Date u objetos ISO String de forma segura
+  const formatToYYYYMMDD = (dateInput, salida) => {
+    let dateObject = dateInput;
+
+    // 1. Si recibe un string, lo limpiamos y procesamos
+    if (typeof dateInput === 'string') {
+      const trimmedInput = dateInput.trim();
+      
+      // Si viene con formato ISO (ej. 2026-11-05T00:00:00.000Z), extraemos solo "2026-11-05"
+      if (trimmedInput.includes('T')) {
+        const onlyDateString = trimmedInput.split('T')[0]; // "2026-11-05"
+        
+        // Añadimos "T00:00:00" e intentamos forzar la lectura local o el reemplazo de guiones
+        // La forma más limpia para evitar desfases con YYYY-MM-DD en string es usar expresiones regulares o dividirlo:
+        const [year, month, day] = onlyDateString.split('-');
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      
+      // Si es otro tipo de string, intentamos parsearlo normalmente
+      dateObject = new Date(trimmedInput);
+    }
+
+    // 2. Control de seguridad: Validamos si el objeto Date es válido
+    if (!(dateObject instanceof Date) || isNaN(dateObject.getTime())) {
+      throw new Error('La entrada no es una fecha válida.');
+    }
+
+    // 3. Tu lógica original (se ejecuta si entró como objeto Date original)
+    const year = dateObject.getFullYear();
+    const month = String(dateObject.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObject.getDate()).padStart(2, '0');        
+    let imprimir_fecha  = `${year}-${month}-${day}`;
+    if(salida){ imprimir_fecha = `${day}-${month}-${year}`; }
+
+    return imprimir_fecha;  
+  };
+
   return (
     //, { paddingTop: insets.top, paddingBottom: insets.bottom } - la ui funciona bien igual sin ellos
     <View style={[styles.container]}>    
@@ -177,7 +214,7 @@ export default function MarcarAsistenciaScreen({ token, onVolver }) {
                 </Text>
 
                 <Text style={styles.detalle}> 
-                  Jornada: {turno.fecha_jornada}
+                  Jornada: {formatToYYYYMMDD(turno.fecha_jornada, true)}
                 </Text>
 
                 {turno.accion === 'marcar_salida' && (

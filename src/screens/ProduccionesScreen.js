@@ -3,10 +3,12 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View, Touch
 from 'react-native';
 import Header from "../components/ui/Header";
 import { obtenerProducciones } from '../services/produccionService';
+import { obtenerEmpresas } from '../services/empresaService';
 import { API_PREF_URL_IMG } from '../config/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Svg, { Rect, Line } from 'react-native-svg';
 import TarjetaInfo from '../components/ui/TarjetaInfo';
+import { Picker } from '@react-native-picker/picker';
 
 const formatoGuaranies = (valor) => {
   const numero = Number(valor) || 0;
@@ -15,6 +17,7 @@ const formatoGuaranies = (valor) => {
 
 export default function ProduccionesScreen({ token, onVolver }) {
 
+  const [empresas, setEmpresas] = useState([]);
   const [producciones, setProducciones] = useState([]);
   const [resumenGrupos, setResumenGrupos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -23,20 +26,46 @@ export default function ProduccionesScreen({ token, onVolver }) {
 
   const [date, setDate] = useState(new Date());
   const [show, setShow] = useState(false);
+
+  const [empresaSeleccionada, setEmpresaSeleccionada] = useState('');
  
-  const consultar = async (fechaSeleccionada = null) => {
+  const consultar_empresas = async () => {
+    setCargando(true);
+    setMensaje('');
+
+    const resultado_empresa = await obtenerEmpresas(token);
+
+    if (resultado_empresa && resultado_empresa.ok) {      
+      setEmpresas(resultado_empresa.empresas);
+      setBloqueado(false);
+    } else {
+      // 3. DETECTAR EL ERROR EXACTO EN CASO DE FALLA
+      console.warn("❌ Falló la consulta de empresas:", {
+        mensaje: resultado_empresa?.mensaje,
+        codigo: resultado_empresa?.codigo
+      });
+
+      setEmpresas([]);
+      setMensaje(resultado_empresa?.mensaje || 'Error desconocido');
+      setBloqueado(resultado_empresa?.codigo === 403);
+    }
+
+    setCargando(false);
+  };
+
+  const consultar = async (fechaSeleccionada = null, empresaSeleccionada = null) => {
     setCargando(true);
     setMensaje('');
 
     const resultado = await obtenerProducciones(
       token,
-      fechaSeleccionada
+      fechaSeleccionada,
+      empresaSeleccionada
     );
 
     if (resultado.ok) {
       setProducciones(resultado.producciones);
-      setResumenGrupos(resultado.resumenGrupos);
-      
+      setResumenGrupos(resultado.resumenGrupos);      
       setBloqueado(false);
     } else {
       setProducciones([]);
@@ -52,6 +81,10 @@ export default function ProduccionesScreen({ token, onVolver }) {
     void consultar();
   }, [token]);
 
+  useEffect(() => {
+    void consultar_empresas();
+  }, [token]);
+
   const totalServicios = resumenGrupos.reduce(
     (total, grupo) => total + Number(grupo.servicios || 0),
     0
@@ -64,12 +97,13 @@ export default function ProduccionesScreen({ token, onVolver }) {
 
   // 1. Se ejecuta cuando el usuario elige una fecha y presiona "Aceptar"
   const handleValueChange = (event, selectedDate) => {
-    setShow(false); // Oculta el selector
-    if (selectedDate) {
-      setDate(selectedDate);
-      void consultar(formatToYYYYMMDD(selectedDate));
-    }
-  };
+  setShow(false);
+  if (selectedDate) {
+    setDate(selectedDate);
+    void consultar(formatToYYYYMMDD(selectedDate), empresaSeleccionada);
+    void consultar_empresas();
+  }
+};
 
   // 2. Se ejecuta cuando el usuario cancela o toca fuera del selector
   const handleDismiss = () => {
@@ -108,7 +142,7 @@ export default function ProduccionesScreen({ token, onVolver }) {
                 editable={!cargando}
               />
 
-              <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center' }}>                    
+              <View style={{  justifyContent: 'flex-start', alignItems: 'center', width: 'auto', }}>                    
                 {show && (
                   <DateTimePicker
                     value={date}
@@ -135,8 +169,33 @@ export default function ProduccionesScreen({ token, onVolver }) {
                   </TouchableOpacity>
                 </View>
               </View>
+            </View>  
 
-            </View>            
+            <Picker
+              selectedValue={empresaSeleccionada}
+              onValueChange={(itemValue) => {
+                setEmpresaSeleccionada(itemValue);
+                void consultar(
+                  formatToYYYYMMDD(date),
+                  itemValue
+                );
+              }}
+              style={styles.picker}
+            >
+              <Picker.Item
+                label="Selecciona una empresa..."
+                value=""
+              />
+
+              {empresas.map((empresa) => (
+                <Picker.Item
+                  key={empresa.id_grupo}
+                  label={empresa.nombre}
+                  value={empresa.id_grupo}
+                />
+              ))}
+            </Picker>
+
           </View>
 
           {cargando ? (
@@ -161,7 +220,7 @@ export default function ProduccionesScreen({ token, onVolver }) {
                     {producciones.map((produccion) => {
                       return (
                         <TarjetaInfo  
-                          key={produccion.id || Math.random().toString()} // El key SIEMPRE debe ir en el elemento raíz del .map
+                          key={produccion.id} // El key SIEMPRE debe ir en el elemento raíz del .map
                           iconoUrl={`${API_PREF_URL_IMG}${produccion.grupo_icono}`}
                           empresa={produccion.grupo_nombre}
                           fecha={produccion.fecha_creacion}
@@ -192,7 +251,7 @@ export default function ProduccionesScreen({ token, onVolver }) {
                   ))}
                   <View style={styles.filaInformacionNoBorderBottom}>
                     <Text style={[styles.textoCelda, styles.colEmpresa]}>
-                      TOTALES:
+                      Totales:
                     </Text>
 
                     <Text style={[styles.textoCelda, styles.colServicios]}>
@@ -201,6 +260,20 @@ export default function ProduccionesScreen({ token, onVolver }) {
 
                     <Text style={[styles.textoCelda, styles.colTotal]}>
                       {formatoGuaranies(totalCostos)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.filaInformacionNoBorderBottom}>
+                    <Text style={[styles.textoCelda, styles.colEmpresa]}>
+                      Delivery:
+                    </Text>
+
+                    <Text style={[styles.textoCelda, styles.colServicios]}>                        
+                      {'->'}
+                    </Text>
+
+                    <Text style={[styles.textoCelda, styles.colTotal]}>
+                      {formatoGuaranies((totalCostos - totalCostos * 20 / 100) )}
                     </Text>
                   </View>
                 </> 
@@ -253,11 +326,11 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   filaFecha: {
-    width: 200,
+    width: 120,
     justifyContent: 'flex-start',
     alignItems: 'center',    
     flexDirection: 'row',
-    gap: 2,
+    gap: 6,
   },
   campoFecha: {
     flex: 1,
@@ -412,5 +485,13 @@ const styles = StyleSheet.create({
   contenidoScroll: {
     gap: 8, // 👈 Esto mantiene la separación vertical (gap-2) entre cada tarjeta automáticamente
     paddingBottom: 16, // Espacio extra al final para que la última tarjeta no quede pegada al borde
-  },  
+  },
+  picker: {
+    textAlign: 'right',
+    width: '50%',
+    borderWidth: 1,
+    borderColor: '#cccccc',
+    borderRadius: 6,
+    padding: 6,
+  },
 });

@@ -247,17 +247,17 @@ export default function App() {
             <Text style={[styles.tabText, pantallaActual === 'inicio' && styles.activeTabText]}>Inicio</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tabItem} onPress={() => setPantallaActual('marcar_asistencia')}>
-            <Ionicons name={pantallaActual === 'marcar_asistencia' ? "location" : "location-outline"} size={22} color={pantallaActual === 'marcar_asistencia' ? '#2ecc71' : '#7f8c8d'} />
-            <Text style={[styles.tabText, pantallaActual === 'marcar_asistencia' && styles.activeTabText]}>Marcar</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity style={styles.tabItem} onPress={() => setPantallaActual('cuaderno')}>
             <Ionicons name={pantallaActual === 'cuaderno' ? "book" : "book-outline"} size={22} color={pantallaActual === 'cuaderno' ? '#2ecc71' : '#7f8c8d'} />
             <Text style={[styles.tabText, pantallaActual === 'cuaderno' && styles.activeTabText]}>Cuaderno</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tabItem} onPress={() => setPantallaActual('asistencias')}>
+          <TouchableOpacity style={styles.tabItem} onPress={() => setPantallaActual('marcar_asistencia')}>
+            <Ionicons name={pantallaActual === 'marcar_asistencia' ? "location" : "location-outline"} size={22} color={pantallaActual === 'marcar_asistencia' ? '#2ecc71' : '#7f8c8d'} />
+            <Text style={[styles.tabText, pantallaActual === 'marcar_asistencia' && styles.activeTabText]}>Marcar</Text>
+          </TouchableOpacity>
+
+         <TouchableOpacity style={styles.tabItem} onPress={() => setPantallaActual('asistencias')}>
             <Ionicons name={pantallaActual === 'asistencias' ? "clipboard" : "clipboard-outline"} size={22} color={pantallaActual === 'asistencias' ? '#2ecc71' : '#7f8c8d'} />
             <Text style={[styles.tabText, pantallaActual === 'asistencias' && styles.activeTabText]}>Asistencias</Text>
           </TouchableOpacity>

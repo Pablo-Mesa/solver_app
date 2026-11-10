@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View, TouchableOpacity, } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View, TouchableOpacity, Image, } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { obtenerAsistencias } from '../services/asistenciasService';
 import Header from "../components/ui/Header";
 import Svg, { Rect, Line } from 'react-native-svg';
+import { API_PREF_URL_IMG } from '../config/api';
+import TarjetaInfo from '../components/ui/TarjetaInfo';
 
 export default function AsistenciasScreen({ token, onVolver }) {
 
@@ -43,9 +45,8 @@ export default function AsistenciasScreen({ token, onVolver }) {
   const handleValueChange = (event, selectedDate) => {
     setShow(false); // Oculta el selector
     if (selectedDate) {
-      console.log(selectedDate);
       setDate(selectedDate);
-      void consultar(formatToYYYYMMDD(selectedDate));
+      void consultar(formatToYYYYMMDD(selectedDate, false));
     }
   };
 
@@ -54,16 +55,43 @@ export default function AsistenciasScreen({ token, onVolver }) {
     setShow(false);
   };
 
-  // Función para formatear el objeto Date a YYYY-MM-DD
-  const formatToYYYYMMDD = (dateObject) => {
+  // Función para formatear a YYYY-MM-DD aceptando Date u objetos ISO String de forma segura
+  const formatToYYYYMMDD = (dateInput, salida) => {
+    let dateObject = dateInput;
+
+    // 1. Si recibe un string, lo limpiamos y procesamos
+    if (typeof dateInput === 'string') {
+      const trimmedInput = dateInput.trim();
+      
+      // Si viene con formato ISO (ej. 2026-11-05T00:00:00.000Z), extraemos solo "2026-11-05"
+      if (trimmedInput.includes('T')) {
+        const onlyDateString = trimmedInput.split('T')[0]; // "2026-11-05"
+        
+        // Añadimos "T00:00:00" e intentamos forzar la lectura local o el reemplazo de guiones
+        // La forma más limpia para evitar desfases con YYYY-MM-DD en string es usar expresiones regulares o dividirlo:
+        const [year, month, day] = onlyDateString.split('-');
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      
+      // Si es otro tipo de string, intentamos parsearlo normalmente
+      dateObject = new Date(trimmedInput);
+    }
+
+    // 2. Control de seguridad: Validamos si el objeto Date es válido
+    if (!(dateObject instanceof Date) || Number.isNaN(dateObject.getTime())) {
+      throw new TypeError('La entrada no es una fecha válida.');
+    }
+
+    // 3. Tu lógica original (se ejecuta si entró como objeto Date original)
     const year = dateObject.getFullYear();
-    // Agrega un cero a la izquierda si el mes o día es menor a 10
     const month = String(dateObject.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObject.getDate()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}`;
+    const day = String(dateObject.getDate()).padStart(2, '0');        
+    let imprimir_fecha  = `${year}-${month}-${day}`;
+    if(salida){ imprimir_fecha = `${day}-${month}-${year}`; }
+
+    return imprimir_fecha;  
   };
- 
+  
   // Función agregada para resolver la advertencia de SonarQube
   const renderContenidoResultados = () => {
     if (cargando) {
@@ -85,9 +113,16 @@ export default function AsistenciasScreen({ token, onVolver }) {
     return asistencias.map((asistencia, indice) => (
       <View key={asistencia.id} style={styles.tarjeta}>
 
-        <Text style={styles.nombreGrupo}>
-          {asistencia.empresa || 'Empresa no disponible'}
-        </Text>
+        <View style={styles.contenedorEmpresa}>
+          <Image 
+            source={ { uri: `${API_PREF_URL_IMG}${asistencia.grupo_icono}` } } 
+            style={styles.imagenIcono}
+            resizeMode="cover"
+          />
+          <Text style={styles.nombreGrupo}>
+            {asistencia.empresa || 'Empresa no disponible'}
+          </Text>
+        </View>
 
         <View style={styles.filaTipo}>
           <Text
@@ -102,7 +137,7 @@ export default function AsistenciasScreen({ token, onVolver }) {
           </Text>
         </View>
 
-        <Text style={styles.dato}>Fecha: {asistencia.fecha}</Text>
+        <Text style={styles.dato}>Fecha: {formatToYYYYMMDD(asistencia.fecha, true)}</Text>
         <Text style={styles.dato}>Hora: {asistencia.hora}</Text>
       </View>
     ));
@@ -131,7 +166,7 @@ export default function AsistenciasScreen({ token, onVolver }) {
               editable={!cargando && !bloqueado}
             />
 
-            <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center' }}>                    
+            <View style={{ justifyContent: 'flex-start', alignItems: 'center', width: 'auto', }}>                    
                 {show && (
                   <DateTimePicker
                     value={date}
@@ -162,10 +197,30 @@ export default function AsistenciasScreen({ token, onVolver }) {
         </View>
 
         {/* Invocación limpia de la función que organiza la UI */}
-        {renderContenidoResultados()}
+        {/* renderContenidoResultados() */}
+
+        <View style={[styles.tarjetero]}>
+                
+          {asistencias.map((asistencia) => {
+            return (
+              <TarjetaInfo  
+                key={asistencia.id} // El key SIEMPRE debe ir en el elemento raíz del .map
+                iconoUrl={`${API_PREF_URL_IMG}${asistencia.grupo_icono}`}
+                empresa={asistencia.empresa}
+                fecha={asistencia.hora}
+                accion={formatToYYYYMMDD(asistencia.fecha, true)}
+                turno={""}
+                tarifa={asistencia.tipo === 'entrada' ? 'Entrada' : 'Salida'} 
+              />
+            );
+          })}
+
+        </View>
 
       </ScrollView>
     </View>
+
+
   );
 }
 
@@ -202,11 +257,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   filaFecha: {
-    width: 200,
+    width: 120,
     justifyContent: 'flex-start',
     alignItems: 'center',    
     flexDirection: 'row',
-    gap: 2,
+    gap: 6,
   },
   campoFecha: {
     flex: 1,
@@ -243,6 +298,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   tarjeta: {
+    backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 10,
@@ -252,7 +308,6 @@ const styles = StyleSheet.create({
   nombreGrupo: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 12,
     flexShrink: 1,
   },
   filaTipo: {
@@ -290,5 +345,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 10,
     paddingBottom: 10,
+  },
+  imagenIcono: {
+    width: 26, // Prioricé el tamaño estricto que tenías en tu style inline
+    height: 26,
+    borderRadius: 50,
+    alignItems: 'center',
+  },
+  contenedorEmpresa: {
+    flexDirection: 'row',       // Coloca los elementos uno al lado del otro
+    alignItems: 'center',        // Alinea verticalmente el texto y la imagen
+    width: '100%',
+  },
+  tarjetero: {
+    gap: 10,
   },
 });

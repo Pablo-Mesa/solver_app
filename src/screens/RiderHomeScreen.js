@@ -18,8 +18,7 @@ export default function RiderHomeScreen({ onVolver, onAbrirCuaderno, onAbrirAsis
         <Text style={styles.descripcion}>
             Aquí podrás consultar tus producciones y asistencias, tambíen marcar llegadas y salidas.
         </Text>
-      </ScrollView>
-      
+      </ScrollView>      
     </View>
   );
 }

@@ -1,7 +1,7 @@
 
 import { API_BASE_URL } from '../config/api';
 
-export async function obtenerProducciones(token, fecha = null) {
+export async function obtenerProducciones(token, fecha = null, empresa = null) {
   if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) {
     return {
       ok: false,
@@ -15,6 +15,10 @@ export async function obtenerProducciones(token, fecha = null) {
 
     if (fecha !== null) {
       parametros.append('fecha', fecha);
+    }
+
+    if (empresa !== null) {
+      parametros.append('empresa', empresa);
     }
 
     const query = parametros.toString();
