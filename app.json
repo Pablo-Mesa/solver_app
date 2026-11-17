@@ -46,7 +46,8 @@
         "expo-build-properties",
         {
           "android": {
-            "ndkVersion": "26.1.10909125"
+            "ndkVersion": "26.1.10909125",
+            "extraProguardRules": "-keep class androidx.work.** { *; }\n-keep class * extends androidx.work.Worker\n-keep class * extends androidx.work.ListenableWorker\n-keep class * extends androidx.room.RoomDatabase"
           }
         }
       ]
