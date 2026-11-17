@@ -1,0 +1,56 @@
+name: Build Android APK (Local en Linux)
+
+on:
+  # Permite lanzar la compilación manualmente con un botón en GitHub
+  workflow_dispatch:
+  # También puedes descomentar las 3 líneas de abajo si quieres que compile automático en cada push a main:
+  # push:
+  #   branches:
+  #     - main
+
+jobs:
+  build-android:
+    name: Compilar APK Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: 1. Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 3. Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: 4. Configurar Java 17 (Requerido por Android / Gradle)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 5. Instalar dependencias del proyecto
+        run: pnpm install --frozen-lockfile
+
+      - name: 6. Instalar EAS CLI
+        run: npm install -g eas-cli
+
+      - name: 7. Validar salud del proyecto con Expo Doctor
+        run: pnpm expo-doctor
+
+      - name: 8. Compilar APK en servidor Linux (Sin gastar créditos EAS)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas build --platform android --profile preview --local --non-interactive --output=./mercedes-mobile-preview.apk
+
+      - name: 9. Subir APK para descarga
+        uses: actions/upload-artifact@v4
+        with:
+          name: mercedes-mobile-apk
+          path: ./mercedes-mobile-preview.apk
+          retention-days: 7
