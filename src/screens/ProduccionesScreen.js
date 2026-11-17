@@ -171,31 +171,31 @@ export default function ProduccionesScreen({ token, onVolver }) {
               </View>
             </View>  
 
-            <Picker
-              selectedValue={empresaSeleccionada}
-              onValueChange={(itemValue) => {
-                setEmpresaSeleccionada(itemValue);
-                void consultar(
-                  formatToYYYYMMDD(date),
-                  itemValue
-                );
-              }}
-              style={styles.picker}
-            >
-              <Picker.Item
-                label="Selecciona una empresa..."
-                value=""
-              />
+                <Picker
+                  selectedValue={empresaSeleccionada}
+                  onValueChange={(itemValue) => {
+                    setEmpresaSeleccionada(itemValue);
+                    void consultar(
+                      formatToYYYYMMDD(date),
+                      itemValue
+                    );
+                  }}
+                  style={styles.picker}
+                >
+                  <Picker.Item
+                    label="Selecciona una empresa..."
+                    value=""
+                  />
 
-              {empresas.map((empresa) => (
-                <Picker.Item
-                  key={empresa.id_grupo}
-                  label={empresa.nombre}
-                  value={empresa.id_grupo}
-                />
-              ))}
-            </Picker>
-
+                  {empresas.map((empresa) => (
+                    <Picker.Item
+                      key={empresa.id_grupo}
+                      label={empresa.nombre}
+                      value={empresa.id_grupo}
+                    />
+                  ))}
+                </Picker>
+           
           </View>
 
           {cargando ? (
@@ -311,11 +311,6 @@ const styles = StyleSheet.create({
     color: '#777',
     fontSize: 16,
     fontWeight: '600',
-
-  },
-  etiqueta: {
-    fontWeight: 'bold',
-    marginBottom: 8,
   },
   fila: {
     flex: 1,
@@ -352,10 +347,6 @@ const styles = StyleSheet.create({
     color: '#b91c1c',
     textAlign: 'center',
   },
-  fechaResultado: {
-    marginTop: 25,
-    color: '#666666',
-  },
   resumenGeneral: {
     backgroundColor: '#eff6ff',
     padding: 16,
@@ -369,13 +360,6 @@ const styles = StyleSheet.create({
   }
   ,
   tarjeta: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 12,
-  },
-  tarjeta_custom: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 10,
@@ -415,20 +399,6 @@ const styles = StyleSheet.create({
     margin: 0,
     padding: 0,
   },
-   // Contenedor de la cabecera
-  filaCabecera: {
-    flexDirection: 'row',
-    borderBottomWidth: 2,
-    borderBottomColor: '#ccc',
-    paddingVertical: 8,
-    backgroundColor: '#f5f5f5',
-  },
-  textoCabecera: {
-    fontWeight: 'bold',
-    color: '#333',
-    fontSize: 14,
-  },
-  
   // Contenedor de cada fila de información
   filaInformacion: {
     flexDirection: 'row',
@@ -487,11 +457,13 @@ const styles = StyleSheet.create({
     paddingBottom: 16, // Espacio extra al final para que la última tarjeta no quede pegada al borde
   },
   picker: {
+    height: 50, 
     textAlign: 'right',
     width: '50%',
     borderWidth: 1,
     borderColor: '#cccccc',
     borderRadius: 6,
-    padding: 6,
+    padding: 0,
+    margin: 0,
   },
 });

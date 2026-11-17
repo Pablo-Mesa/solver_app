@@ -227,7 +227,7 @@ export default function AsistenciasScreen({ token, onVolver }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5F6', // O '#1A1C24'
+    backgroundColor: '#F4F5F6', //   O '#1A1C24'
   },
   pantalla: {
     flex: 1,
@@ -290,12 +290,6 @@ const styles = StyleSheet.create({
   fechaResultado: {
     marginTop: 25,
     color: '#666666',
-  },
-  subtitulo: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 22,
-    marginBottom: 12,
   },
   tarjeta: {
     backgroundColor: '#ffffff',

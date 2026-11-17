@@ -1,0 +1,4 @@
+nodeLinker: hoisted
+
+overrides:
+  react-native-svg: ^15.16.0
